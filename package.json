@@ -1,0 +1,35 @@
+{
+    "name": "turnip",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ryuichl/turnip-monitor.git"
+    },
+    "author": "roylin",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ryuichl/turnip-monitor/issues"
+    },
+    "homepage": "https://github.com/ryuichl/turnip-monitor#readme",
+    "dependencies": {
+        "bluebird": "^3.7.2",
+        "cron": "^1.8.2",
+        "fs-extra": "^9.0.0",
+        "jquery": "^3.5.0",
+        "jsdom": "^16.2.2",
+        "moment-timezone": "^0.5.28",
+        "playwright": "^0.13.0",
+        "request": "^2.88.2",
+        "request-promise": "^4.2.5",
+        "tough-cookie": "^3.0.1",
+        "yargs": "^15.3.1"
+    },
+    "devDependencies": {
+        "prettier": "^2.0.2"
+    }
+}
