@@ -43,7 +43,7 @@
                 '敘述 : ' +
                 island.description +
                 '\n' +
-                '建立時間:' +
+                '建立時間: ' +
                 moment(island.creationTime).tz('Asia/Taipei').format('YYYY/MM/DD HH:mm:ss')
             return message
         }
@@ -56,8 +56,8 @@
                 island.creationTime = moment.tz(island.creationTime, 'America/Chicago').tz('Asia/Taipei').format()
                 if (
                     moment()
-                        .startOf('minute')
-                        .add(-1 * time_range, 'minutes')
+                        .startOf('seconds')
+                        .add(-1 * time_range, 'seconds')
                         .isBefore(moment(island.creationTime)) &&
                     island.turnipPrice > 550
                 ) {
@@ -77,7 +77,7 @@
             return process.exit(0)
         }
 
-        const time_range = 1
+        const time_range = 30
         const browser = await playwright['firefox'].launch()
         const context = await browser.newContext()
         const page = await context.newPage()
@@ -90,6 +90,9 @@
                 await Promise.map(islands, (island) => {
                     return line_notify(keys, message_template(island))
                 })
+                if (islands.length === 0) {
+                    await line_notify(keys, '沒有結果符合')
+                }
                 // console.log(result)
                 // await fs.outputJSON(`./db/islands.json`, islands)
             }
@@ -97,7 +100,7 @@
 
         // await browser.close()
         const job = new CronJob({
-            cronTime: '0 * * * * *',
+            cronTime: '*/30 * * * * *',
             onTick: async () => {
                 console.log(`job start ${moment().format()}`)
                 await reload(page).catch((err) => {

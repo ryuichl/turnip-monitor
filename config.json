@@ -1,5 +1,9 @@
 {
     "line": {
-        "notify": [""]
+        "notify": [""],
+        "bot": {
+            "channelAccessToken": "",
+            "channelSecret": ""
+        }
     }
 }

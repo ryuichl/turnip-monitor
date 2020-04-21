@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start": "node ./bin/www"
     },
     "repository": {
         "type": "git",
@@ -17,12 +17,18 @@
     },
     "homepage": "https://github.com/ryuichl/turnip-monitor#readme",
     "dependencies": {
+        "@line/bot-sdk": "^6.8.4",
         "bluebird": "^3.7.2",
+        "cookie-parser": "~1.4.4",
         "cron": "^1.8.2",
+        "debug": "~2.6.9",
+        "execa": "^4.0.0",
+        "express": "~4.16.1",
         "fs-extra": "^9.0.0",
         "jquery": "^3.5.0",
         "jsdom": "^16.2.2",
         "moment-timezone": "^0.5.28",
+        "morgan": "~1.9.1",
         "playwright": "^0.13.0",
         "request": "^2.88.2",
         "request-promise": "^4.2.5",
