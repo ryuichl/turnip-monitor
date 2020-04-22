@@ -1,12 +1,11 @@
 const { middleware, Client } = require('@line/bot-sdk')
-const execa = require('execa')
 
 const bot_config = {
     channelAccessToken: process.env.line_channelAccessToken,
     channelSecret: process.env.line_channelSecret
 }
-let subprocess
-let job = false
+const browser = require('../handlers/turnip').init()
+const job = require('../handlers/turnip').job
 const client = new Client(bot_config)
 
 exports.middleware = middleware(bot_config)
@@ -17,33 +16,31 @@ exports.webhook = async (req, res, next) => {
     const replyToken = req.body.events[0].replyToken
     console.log(text)
     if (text === 'start') {
-        if (job) {
+        if (job.running) {
             await client.replyMessage(replyToken, {
                 type: 'text',
                 text: '已經開始'
             })
             return true
         }
-        job = true
         await client.replyMessage(replyToken, {
             type: 'text',
             text: '開始'
         })
-        subprocess = execa('node', ['turnip'])
+        job.start()
     } else if (text === 'stop') {
-        if (!job) {
+        if (!job.running) {
             await client.replyMessage(replyToken, {
                 type: 'text',
                 text: '已經結束'
             })
             return true
         }
-        job = false
         await client.replyMessage(replyToken, {
             type: 'text',
             text: '結束'
         })
-        subprocess.cancel()
+        job.stop()
     } else if (text === 'help') {
         await client.replyMessage(replyToken, {
             type: 'text',

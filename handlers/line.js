@@ -1,10 +1,6 @@
-const config = require('../config.json')
-const Promise = require('bluebird')
 const request = require('request-promise')
 
-const keys = config.line.notify
-
-exports.line_notify = async (message) => {
+exports.notify = async (key, message) => {
     let options = {
         method: 'POST',
         url: 'https://notify-api.line.me/api/notify',
@@ -14,9 +10,28 @@ exports.line_notify = async (message) => {
         },
         json: true
     }
-    const result = await Promise.map(keys, (key) => {
-        options.headers.Authorization = `Bearer ${key}`
-        return request(options)
-    })
-    return result
+    options.headers.Authorization = `Bearer ${key}`
+    return request(options)
+}
+
+exports.message_template = (island) => {
+    const message =
+        '島名 : ' +
+        island.name +
+        '\n' +
+        '大頭菜價錢 : ' +
+        island.turnipPrice +
+        '\n' +
+        '排隊情況 : ' +
+        island.queued +
+        '\n' +
+        '網址 : ' +
+        `https://turnip.exchange/island/${island.turnipCode}` +
+        '\n' +
+        '敘述 : ' +
+        island.description +
+        '\n' +
+        '建立時間 : ' +
+        moment(island.creationTime).tz('Asia/Taipei').format('YYYY/MM/DD HH:mm:ss')
+    return message
 }
