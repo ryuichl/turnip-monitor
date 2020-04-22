@@ -31,7 +31,7 @@ const find_island = async (islands, time_range) => {
 
 exports.init = async () => {
     const time_range = 30
-    const browser = await playwright['firefox'].launch()
+    const browser = await playwright['firefox'].launch({ args: ['--no-sandbox'] })
     const context = await browser.newContext()
     const page = await context.newPage()
     await page.goto('https://turnip.exchange/islands')
