@@ -1,4 +1,4 @@
-const playwright = require('playwright')
+const puppeteer = require('puppeteer')
 const moment = require('moment-timezone')
 const CronJob = require('cron').CronJob
 const Promise = require('bluebird')
@@ -31,9 +31,8 @@ const find_island = async (islands, time_range) => {
 
 exports.init = async () => {
     const time_range = 30
-    const browser = await playwright['firefox'].launch({ args: ['--no-sandbox'] })
-    const context = await browser.newContext()
-    const page = await context.newPage()
+    const browser = await puppeteer.launch({ producct: 'firefox', args: ['--no-sandbox'] })
+    const page = await browser.newPage()
     await page.goto('https://turnip.exchange/islands')
     await page.waitForSelector('.note')
     page.on('request', async (request) => {
