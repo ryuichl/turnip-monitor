@@ -7,7 +7,6 @@ const line = require('./line')
 
 const reload = async (page) => {
     await page.reload()
-    await page.waitForSelector('.note')
 }
 const find_island = async (islands, time_range) => {
     const result = islands.reduce((array, island) => {
@@ -31,10 +30,9 @@ const find_island = async (islands, time_range) => {
 
 exports.init = async () => {
     const time_range = 30
-    const browser = await puppeteer.launch({ producct: 'firefox', args: ['--no-sandbox', '--disable-setuid-sandbox'] })
+    const browser = await puppeteer.launch({ product: 'firefox', args: ['--no-sandbox', '--disable-setuid-sandbox'] })
     const page = await browser.newPage()
     await page.goto('https://turnip.exchange/islands')
-    await page.waitForSelector('.note')
     page.on('request', async (request) => {
         if (request.url() === 'https://api.turnip.exchange/islands/') {
             let { islands } = await (await request.response()).json()

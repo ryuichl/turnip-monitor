@@ -5,7 +5,7 @@ const bot_config = {
     channelSecret: process.env.line_channelSecret
 }
 const browser = require('../handlers/turnip').init()
-const job = require('../handlers/turnip').job
+const job = require('../handlers/turnip').job()
 const client = new Client(bot_config)
 
 exports.middleware = middleware(bot_config)

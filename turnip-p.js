@@ -73,24 +73,23 @@
         }
 
         const time_range = 30
-        const browser = await puppeteer.launch({ producct: 'firefox' })
-        // const context = await browser.newContext()
-        const page = await browser.newPage()
-        await page.goto('https://turnip.exchange/islands')
-        await page.waitForSelector('.note')
-        page.on('request', async (request) => {
-            if (request.url() === 'https://api.turnip.exchange/islands/') {
-                let { islands } = await (await request.response()).json()
-                islands = await find_island(islands, time_range)
-                await Promise.map(islands, (island) => {
-                    return line_notify(process.env.line_notify, message_template(island))
-                })
-                if (islands.length === 0) {
-                    await line_notify(process.env.line_notify, '沒有結果符合')
-                }
-            }
+        const browser = await puppeteer.launch({
+            headless: false
         })
-
+        const page = await browser.newPage()
+        // page.on('request', (request) => {
+        //     console.log('request', request.url())
+        // })
+        // page.on('response', (response) => {
+        //     console.log('response', response.url())
+        // })
+        await page.goto('https://turnip.exchange/islands')
+        // await page.waitForSelector('.note')
+        console.log(1)
+        const test = await page.waitForResponse('https://api.turnip.exchange/islands')
+        console.log(2)
+        console.log(test)
+        return true
         // await browser.close()
         const job = new CronJob({
             cronTime: '*/30 * * * * *',
