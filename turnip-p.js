@@ -1,7 +1,9 @@
 ;(async function () {
     try {
         require('dotenv').config()
-        const puppeteer = require('puppeteer')
+        const puppeteer = require('puppeteer-extra')
+        const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+        puppeteer.use(StealthPlugin())
         const moment = require('moment-timezone')
         const CronJob = require('cron').CronJob
         const argv = require('yargs').argv
@@ -42,10 +44,6 @@
                 moment(island.creationTime).tz('Asia/Taipei').format('YYYY/MM/DD HH:mm:ss')
             return message
         }
-        const reload = async (page) => {
-            await page.reload()
-            await page.waitForSelector('.note')
-        }
         const find_island = async (islands, time_range) => {
             const result = islands.reduce((array, island) => {
                 island.creationTime = moment.tz(island.creationTime, 'America/Chicago').tz('Asia/Taipei').format()
@@ -65,6 +63,17 @@
             })
             return result
         }
+        const reload = async (page, time_range) => {
+            await page.reload()
+            let { islands } = await (await page.waitForResponse('https://api.turnip.exchange/islands/')).json()
+            islands = await find_island(islands, time_range)
+            await Promise.map(islands, (island) => {
+                return line_notify(process.env.line_notify, message_template(island))
+            })
+            if (islands.length === 0) {
+                await line_notify(process.env.line_notify, '沒有結果符合')
+            }
+        }
 
         if (argv.job === 'test') {
             await line_notify(process.env.line_notify, '測試訊息')
@@ -74,28 +83,16 @@
 
         const time_range = 30
         const browser = await puppeteer.launch({
-            headless: false
+            // headless: false
         })
         const page = await browser.newPage()
-        // page.on('request', (request) => {
-        //     console.log('request', request.url())
-        // })
-        // page.on('response', (response) => {
-        //     console.log('response', response.url())
-        // })
         await page.goto('https://turnip.exchange/islands')
-        // await page.waitForSelector('.note')
-        console.log(1)
-        const test = await page.waitForResponse('https://api.turnip.exchange/islands')
-        console.log(2)
-        console.log(test)
-        return true
-        // await browser.close()
+
         const job = new CronJob({
             cronTime: '*/30 * * * * *',
             onTick: async () => {
                 console.log(`job start ${moment().format()}`)
-                await reload(page).catch((err) => {
+                await reload(page, time_range).catch((err) => {
                     console.log(err.message)
                 })
             },

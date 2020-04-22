@@ -4,14 +4,17 @@ const bot_config = {
     channelAccessToken: process.env.line_channelAccessToken,
     channelSecret: process.env.line_channelSecret
 }
-const browser = require('../handlers/turnip').init()
-const job = require('../handlers/turnip').job()
+const turnip = require('../handlers/turnip')
 const client = new Client(bot_config)
+let job
 
 exports.middleware = middleware(bot_config)
 
 exports.webhook = async (req, res, next) => {
     res.status(200).end()
+    if (!turnip.is_init()) {
+        job = await turnip.init()
+    }
     const text = req.body.events[0].message.text
     const replyToken = req.body.events[0].replyToken
     console.log(text)
