@@ -1,10 +1,9 @@
-const config = require('../config.json')
 const { middleware, Client } = require('@line/bot-sdk')
 const execa = require('execa')
 
 const bot_config = {
-    channelAccessToken: config.line.bot.channelAccessToken,
-    channelSecret: config.line.bot.channelSecret
+    channelAccessToken: process.env.line_channelAccessToken,
+    channelSecret: process.env.line_channelSecret
 }
 let subprocess
 let job = false
@@ -13,16 +12,17 @@ const client = new Client(bot_config)
 exports.middleware = middleware(bot_config)
 
 exports.webhook = async (req, res, next) => {
+    res.status(200).end()
     const text = req.body.events[0].message.text
     const replyToken = req.body.events[0].replyToken
     console.log(text)
-    if (text === '我要賣菜') {
+    if (text === 'start') {
         if (job) {
             await client.replyMessage(replyToken, {
                 type: 'text',
                 text: '已經開始'
             })
-            return res.status(200).end()
+            return true
         }
         job = true
         await client.replyMessage(replyToken, {
@@ -30,13 +30,13 @@ exports.webhook = async (req, res, next) => {
             text: '開始'
         })
         subprocess = execa('node', ['turnip'])
-    } else if (text === '不想賣了') {
+    } else if (text === 'stop') {
         if (!job) {
             await client.replyMessage(replyToken, {
                 type: 'text',
                 text: '已經結束'
             })
-            return res.status(200).end()
+            return true
         }
         job = false
         await client.replyMessage(replyToken, {
@@ -44,11 +44,10 @@ exports.webhook = async (req, res, next) => {
             text: '結束'
         })
         subprocess.cancel()
-    } else if (text === '我要求救') {
+    } else if (text === 'help') {
         await client.replyMessage(replyToken, {
             type: 'text',
-            text: '開始請打: 我要賣菜\n結束請打: 不想賣了'
+            text: '開始請打: start\n結束請打: stop'
         })
     }
-    res.status(200).end()
 }

@@ -1,16 +1,14 @@
 ;(async function () {
     try {
+        require('dotenv').config()
         const playwright = require('playwright')
-        const fs = require('fs-extra')
         const moment = require('moment-timezone')
         const CronJob = require('cron').CronJob
         const argv = require('yargs').argv
         const Promise = require('bluebird')
         const request = require('request-promise')
 
-        const keys = require('./config.json').line.notify
-
-        const line_notify = async (keys, message) => {
+        const line_notify = async (key, message) => {
             let options = {
                 method: 'POST',
                 url: 'https://notify-api.line.me/api/notify',
@@ -20,11 +18,8 @@
                 },
                 json: true
             }
-            const result = await Promise.map(keys, (key) => {
-                options.headers.Authorization = `Bearer ${key}`
-                return request(options)
-            })
-            return result
+            options.headers.Authorization = `Bearer ${key}`
+            return request(options)
         }
         const message_template = (island) => {
             const message =
@@ -43,7 +38,7 @@
                 '敘述 : ' +
                 island.description +
                 '\n' +
-                '建立時間: ' +
+                '建立時間 : ' +
                 moment(island.creationTime).tz('Asia/Taipei').format('YYYY/MM/DD HH:mm:ss')
             return message
         }
@@ -72,7 +67,7 @@
         }
 
         if (argv.job === 'test') {
-            await line_notify(keys, '測試訊息')
+            await line_notify(process.env.line_notify, '測試訊息')
             console.log('測試訊息已發送')
             return process.exit(0)
         }
@@ -88,13 +83,11 @@
                 let { islands } = await (await request.response()).json()
                 islands = await find_island(islands, time_range)
                 await Promise.map(islands, (island) => {
-                    return line_notify(keys, message_template(island))
+                    return line_notify(process.env.line_notify, message_template(island))
                 })
                 if (islands.length === 0) {
-                    await line_notify(keys, '沒有結果符合')
+                    await line_notify(process.env.line_notify, '沒有結果符合')
                 }
-                // console.log(result)
-                // await fs.outputJSON(`./db/islands.json`, islands)
             }
         })
 
