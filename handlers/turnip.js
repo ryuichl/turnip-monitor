@@ -31,7 +31,7 @@ const find_island = async (islands, time_range) => {
 
 exports.init = async () => {
     const time_range = 30
-    const browser = await puppeteer.launch({ producct: 'firefox', args: ['--no-sandbox'] })
+    const browser = await puppeteer.launch({ producct: 'firefox', args: ['--no-sandbox', '--disable-setuid-sandbox'] })
     const page = await browser.newPage()
     await page.goto('https://turnip.exchange/islands')
     await page.waitForSelector('.note')
