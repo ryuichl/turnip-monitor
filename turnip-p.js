@@ -86,6 +86,14 @@
             // headless: false
         })
         const page = await browser.newPage()
+        await page.setRequestInterception(true)
+        page.on('request', (request) => {
+            if (request.url() === 'https://api.turnip.exchange/islands/') {
+                request.continue({ postData: JSON.stringify({ islander: 'neither' }) })
+                return true
+            }
+            request.continue()
+        })
         await page.goto('https://turnip.exchange/islands')
 
         const job = new CronJob({
