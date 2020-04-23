@@ -4,11 +4,12 @@ puppeteer.use(StealthPlugin())
 const moment = require('moment-timezone')
 const CronJob = require('cron').CronJob
 const Promise = require('bluebird')
+const request = require('request-promise')
 
 const line = require('./line')
 let is_init = false
 
-const find_island = async (islands, time_range) => {
+const find_island = (islands, time_range) => {
     const result = islands.reduce((array, island) => {
         island.creationTime = moment.tz(island.creationTime, 'America/Chicago').tz('Asia/Taipei').format()
         if (
@@ -20,6 +21,7 @@ const find_island = async (islands, time_range) => {
         ) {
             array.push(island)
         }
+        island.source = 'turnip.exchange'
         return array
     }, [])
     result.sort((a, b) => {
@@ -30,14 +32,42 @@ const find_island = async (islands, time_range) => {
 const reload = async (page, time_range) => {
     await page.reload()
     let { islands } = await (await page.waitForResponse('https://api.turnip.exchange/islands/')).json()
-    islands = await find_island(islands, time_range)
+    islands = find_island(islands, time_range)
     await Promise.map(islands, (island) => {
         return line.notify(process.env.line_notify, line.message_template(island))
     })
     if (islands.length === 0) {
-        await line.notify(process.env.line_notify, '沒有結果符合')
+        await line.notify(process.env.line_notify, 'turnip.exchange 沒有結果符合')
     }
 }
+const ac_room_list = async () => {
+    let options = {
+        method: 'GET',
+        url: 'https://api.ac-room.cc/list',
+        json: true
+    }
+    return request(options)
+}
+const find_room = (room, time_range) => {
+    const result = room.reduce((array, room) => {
+        if (
+            room.types.includes('菜價') &&
+            moment()
+                .startOf('seconds')
+                .add(-1 * time_range, 'seconds')
+                .isBefore(moment(room.created_at))
+        ) {
+            room.source = 'ac-room.cc'
+            array.push(room)
+        }
+        return array
+    }, [])
+    result.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at)
+    })
+    return result
+}
+
 exports.is_init = () => {
     return is_init
 }
@@ -61,6 +91,14 @@ exports.init = async () => {
             await reload(page, time_range).catch((err) => {
                 console.log(err.message)
             })
+            let { list } = await ac_room_list()
+            list = find_room(list, time_range)
+            await Promise.map(list, (room) => {
+                return line.notify(process.env.line_notify, line.message_template(room))
+            })
+            if (list.length === 0) {
+                await line.notify(process.env.line_notify, 'ac-room.cc 沒有結果符合')
+            }
         },
         timeZone: 'Asia/Taipei'
     })
