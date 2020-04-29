@@ -18,5 +18,6 @@
 
 ## 使用方式
 
-1. 在 config.json -> line -> notify 填入 line notify 的 token
-2. 下指令 `node turnip`
+1. 新增一個.env 檔案
+1. 在 .env 輸入 line_notify="你的 token"
+1. 下指令 `node turnip-p`
