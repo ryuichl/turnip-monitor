@@ -19,5 +19,14 @@
 ## 使用方式
 
 1. 新增一個.env 檔案
-1. 在 .env 輸入 line_notify="你的 token"
-1. 下指令 `node turnip-p`
+2. 在 .env 輸入 line_notify="你的 token"
+3. 下指令 `node turnip-p`
+
+## 支援 heroku 部屬後透過 line 開關追蹤
+
+1. 在 heroku 開啟專案
+2. 連接 github 專案
+3. 後台 setting -> config vars 填入 line_channelAccessToken, line_channelSecret, line_notify
+4. 後台 setting -> BuildPacks 新增 https://github.com/jontewks/puppeteer-heroku-buildpack
+5. deploy branch
+6. 開始使用 指令包含 help, start, stop
