@@ -6,8 +6,11 @@ const CronJob = require('cron').CronJob
 const Promise = require('bluebird')
 const request = require('request-promise')
 
+const user_model = require('../models/user')
+
 const line = require('./line')
 let is_init = false
+let users = {}
 
 const find_island = (islands, time_range) => {
     const result = islands.reduce((array, island) => {
@@ -34,10 +37,14 @@ const reload = async (page, time_range) => {
     let { islands } = await (await page.waitForResponse('https://api.turnip.exchange/islands/')).json()
     islands = find_island(islands, time_range)
     await Promise.map(islands, (island) => {
-        return line.notify(process.env.line_notify, line.message_template(island))
+        return Promise.map(Object.keys(users), (user_id) => {
+            return line.notify(users[user_id], line.message_template(island))
+        })
     })
     if (islands.length === 0) {
-        await line.notify(process.env.line_notify, 'turnip.exchange 沒有結果符合')
+        await Promise.map(Object.keys(users), (user_id) => {
+            return line.notify(users[user_id], 'turnip.exchange 沒有結果符合')
+        })
     }
 }
 const ac_room_list = async () => {
@@ -71,6 +78,17 @@ const find_room = (room, time_range) => {
 exports.is_init = () => {
     return is_init
 }
+exports.get_user = () => {
+    return users
+}
+exports.add_user = (user) => {
+    users[user.user_id] = user.access_token
+    return users
+}
+exports.delete_user = (user_id) => {
+    delete users[user_id]
+    return users
+}
 exports.init = async () => {
     const time_range = 30
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })
@@ -94,14 +112,26 @@ exports.init = async () => {
             let { list } = await ac_room_list()
             list = find_room(list, time_range)
             await Promise.map(list, (room) => {
-                return line.notify(process.env.line_notify, line.message_template(room))
+                return Promise.map(Object.keys(users), (user_id) => {
+                    return line.notify(users[user_id], line.message_template(room))
+                })
             })
             if (list.length === 0) {
-                await line.notify(process.env.line_notify, 'ac-room.cc 沒有結果符合')
+                await Promise.map(Object.keys(users), (user_id) => {
+                    return line.notify(users[user_id], 'ac-room.cc 沒有結果符合')
+                })
             }
         },
         timeZone: 'Asia/Taipei'
     })
     is_init = true
+    await user_model
+        .query()
+        .where({
+            start: true
+        })
+        .patch({
+            start: false
+        })
     return job
 }
