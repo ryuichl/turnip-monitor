@@ -125,13 +125,5 @@ exports.init = async () => {
         timeZone: 'Asia/Taipei'
     })
     is_init = true
-    await user_model
-        .query()
-        .where({
-            start: true
-        })
-        .patch({
-            start: false
-        })
     return job
 }

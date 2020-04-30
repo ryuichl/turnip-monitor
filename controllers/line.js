@@ -30,15 +30,9 @@ exports.webhook = async (req, res, next) => {
             })
             return true
         }
-        const user = await user_model
-            .query()
-            .findOne({
-                line_user_id: userId
-            })
-            .patch({
-                start: true
-            })
-            .returning('*')
+        const user = await user_model.query().findOne({
+            line_user_id: userId
+        })
         if (!user || !user.line_notify_access_token) {
             await client.replyMessage(replyToken, {
                 type: 'text',
@@ -62,15 +56,6 @@ exports.webhook = async (req, res, next) => {
             })
             return true
         }
-        await user_model
-            .query()
-            .findOne({
-                line_user_id: userId
-            })
-            .patch({
-                start: false
-            })
-
         turnip.delete_user(userId)
         await client.replyMessage(replyToken, {
             type: 'text',
