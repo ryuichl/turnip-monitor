@@ -1,5 +1,6 @@
 const { middleware, Client } = require('@line/bot-sdk')
 const request = require('request-promise')
+const Promise = require('bluebird')
 
 const user_model = require('../models/user')
 
@@ -18,6 +19,10 @@ exports.webhook = async (req, res, next) => {
     res.status(200).end()
     if (!turnip.is_init()) {
         job = await turnip.init()
+    }
+    const type = req.body.events[0].message.type
+    if (type !== 'text') {
+        return true
     }
     const text = req.body.events[0].message.text.toLowerCase()
     const userId = req.body.events[0].source.userId
@@ -89,6 +94,17 @@ exports.webhook = async (req, res, next) => {
             type: 'text',
             text: '全部結束'
         })
+    } else if (text === 'status') {
+        let users = await user_model.query().where({})
+        const online = turnip.get_user()
+        users = users.map((user) => {
+            return `${user.display_name} ${online[user.line_user_id] ? '✔' : ''}`
+        })
+        const text = `job : ${job.running ? true : false}\nuser : ${users.join('\n')}`
+        await client.replyMessage(replyToken, {
+            type: 'text',
+            text: text
+        })
     }
 }
 
@@ -117,6 +133,7 @@ exports.line_notify_auth = async (req, res) => {
         json: true
     }
     const user_id = req.query.state
+    const profile = await client.getProfile(user_id)
     const { access_token } = await request(options)
     const user = await user_model.query().findOne({
         line_user_id: user_id
@@ -134,7 +151,8 @@ exports.line_notify_auth = async (req, res) => {
     } else {
         await user_model.query().insert({
             line_user_id: user_id,
-            line_notify_access_token: access_token
+            line_notify_access_token: access_token,
+            display_name: profile.displayName
         })
     }
     res.redirect(`https://line.me/R/oaMessage/@500adltf/?info`)

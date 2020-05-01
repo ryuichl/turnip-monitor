@@ -3,6 +3,7 @@ exports.up = function (knex, Promise) {
         table.uuid('_id').primary().defaultTo(knex.raw('uuid_generate_v4()'))
         table.string('line_notify_access_token').unique()
         table.string('line_user_id').unique()
+        table.string('display_name')
     })
 }
 
