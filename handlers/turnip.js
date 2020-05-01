@@ -6,8 +6,6 @@ const CronJob = require('cron').CronJob
 const Promise = require('bluebird')
 const request = require('request-promise')
 
-const user_model = require('../models/user')
-
 const line = require('./line')
 let is_init = false
 let users = {}

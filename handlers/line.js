@@ -58,3 +58,14 @@ exports.message_template = (island) => {
         return message
     }
 }
+
+exports.revoke_notify = async (key) => {
+    let options = {
+        method: 'POST',
+        url: 'https://notify-api.line.me/api/revoke',
+        headers: {},
+        json: true
+    }
+    options.headers.Authorization = `Bearer ${key}`
+    return request(options)
+}
