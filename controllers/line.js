@@ -83,6 +83,12 @@ exports.webhook = async (req, res, next) => {
             type: 'text',
             text: user ? '綁定成功' : '尚未綁定'
         })
+    } else if (text === 'stopall') {
+        job.stop()
+        await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '全部結束'
+        })
     }
 }
 
