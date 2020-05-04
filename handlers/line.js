@@ -59,6 +59,11 @@ exports.message_template = (island) => {
     }
 }
 
+exports.admin_notify_template = (info) => {
+    const message = '名字 : ' + info.display_name + '\n' + '指令 : ' + info.command + '\n' + 'id : ' + info.user_id
+    return message
+}
+
 exports.revoke_notify = async (key) => {
     let options = {
         method: 'POST',

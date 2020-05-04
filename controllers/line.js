@@ -1,6 +1,7 @@
 const { middleware, Client } = require('@line/bot-sdk')
 const request = require('request-promise')
 const Promise = require('bluebird')
+const CryptoJS = require('crypto-js')
 
 const user_model = require('../models/user')
 
@@ -54,6 +55,9 @@ exports.webhook = async (req, res, next) => {
         if (!job.running) {
             job.start()
         }
+        if (userId !== process.env.admin) {
+            await line.notify(process.env.admin_notify, line.admin_notify_template({ display_name: user.display_name, command: text, user_id: userId }))
+        }
     } else if (text === 'stop') {
         if (!turnip.get_user()[userId]) {
             await client.replyMessage(replyToken, {
@@ -70,16 +74,27 @@ exports.webhook = async (req, res, next) => {
         if (Object.keys(turnip.get_user()).length === 0) {
             job.stop()
         }
+        if (userId !== process.env.admin) {
+            const user = await user_model.query().findOne({
+                line_user_id: userId
+            })
+            await line.notify(process.env.admin_notify, line.admin_notify_template({ display_name: user.display_name, command: text, user_id: userId }))
+        }
     } else if (text === 'help') {
         await client.replyMessage(replyToken, {
             type: 'text',
             text: `綁定請打: link\n開始請打: start\n結束請打: stop`
         })
     } else if (text === 'link') {
+        const crypto_user_id = CryptoJS.AES.encrypt(userId, process.env.crypto_key).toString()
+        const crypto_base64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(crypto_user_id))
         await client.replyMessage(replyToken, {
             type: 'text',
-            text: `https://${process.env.host}/line/notify_auth?state=${userId}`
+            text: `https://${process.env.host}/line/notify_auth?state=${crypto_base64}`
         })
+        if (userId !== process.env.admin) {
+            await line.notify(process.env.admin_notify, line.admin_notify_template({ display_name: undefined, command: text, user_id: userId }))
+        }
     } else if (text === 'info') {
         const user = await user_model.query().findOne({
             line_user_id: userId
@@ -88,13 +103,15 @@ exports.webhook = async (req, res, next) => {
             type: 'text',
             text: user ? '綁定成功' : '尚未綁定'
         })
-    } else if (text === 'stopall') {
-        job.stop()
+    } else if (text === 'stopall' && userId === process.env.admin) {
+        if (job.running) {
+            job.stop()
+        }
         await client.replyMessage(replyToken, {
             type: 'text',
             text: '全部結束'
         })
-    } else if (text === 'status') {
+    } else if (text === 'status' && userId === process.env.admin) {
         let users = await user_model.query().where({})
         const online = turnip.get_user()
         users = users.map((user) => {
@@ -120,7 +137,7 @@ exports.line_notify_auth = async (req, res) => {
             `https://notify-bot.line.me/oauth/authorize?response_type=code&client_id=${process.env.line_notify_channel_id}&redirect_uri=https://${process.env.host}/line/notify_auth&state=${req.query.state}&scope=notify`
         )
     }
-    let options = {
+    const options = {
         method: 'POST',
         uri: 'https://notify-bot.line.me/oauth/token',
         form: {
@@ -132,7 +149,14 @@ exports.line_notify_auth = async (req, res) => {
         },
         json: true
     }
-    const user_id = req.query.state
+    const user_id = await Promise.try(() => {
+        const decrypto_base64 = CryptoJS.enc.Base64.parse(decodeURIComponent(req.query.state)).toString(CryptoJS.enc.Utf8)
+        const user_id = CryptoJS.AES.decrypt(decrypto_base64, process.env.crypto_key).toString(CryptoJS.enc.Utf8)
+        return user_id
+    })
+    if (!user_id) {
+        return Promise.reject(new Error('參數不符'))
+    }
     const profile = await client.getProfile(user_id)
     const { access_token } = await request(options)
     const user = await user_model.query().findOne({
